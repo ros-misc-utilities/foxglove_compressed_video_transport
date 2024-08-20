@@ -1,0 +1,13 @@
+<library path="foxglove_compressed_video_transport_component">
+  <class name="image_transport/foxglove_pub" type="foxglove_compressed_video_transport::Publisher" base_class_type="image_transport::PublisherPlugin">
+    <description>
+      This plugin encodes frames into foxglove compressed video packets
+    </description>
+  </class>
+  <class name="image_transport/foxglove_sub" type="foxglove_compressed_video_transport::Subscriber" base_class_type="image_transport::SubscriberPlugin">
+    <description>
+      This plugin decodes frames from foxglove compressed video packets
+    </description>
+  </class>
+</library>
+		  
