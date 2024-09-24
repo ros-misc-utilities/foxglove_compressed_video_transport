@@ -149,14 +149,14 @@ void Publisher::packetReady(
   const std::string & frame_id, const rclcpp::Time & stamp, const std::string & codec,
   uint32_t width, uint32_t height, uint64_t pts, uint8_t flags, uint8_t * data, size_t sz)
 {
-  (void)frame_id;
-  (void)stamp;
   (void)codec;
   (void)pts;
   (void)flags;
   (void)width;
   (void)height;
   auto msg = std::make_shared<CompressedVideo>();
+  msg->frame_id = frame_id;
+  msg->timestamp = stamp;
   msg->format = "h264";
   msg->data.assign(data, data + sz);
 
