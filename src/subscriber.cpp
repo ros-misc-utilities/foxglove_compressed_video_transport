@@ -86,6 +86,7 @@ void Subscriber::internalCallback(const CompressedVideoConstPtr & msg, const Cal
     }
   }
   decoder_.decodePacket(
-    msg->format, &msg->data[0], msg->data.size(), pts_++, "", node_->get_clock()->now());
+    msg->format, &msg->data[0], msg->data.size(), pts_++, msg->frame_id.c_str(),
+    rclcpp::Time(msg->timestamp));
 }
 }  // namespace foxglove_compressed_video_transport
