@@ -199,8 +199,8 @@ rmw_qos_profile_t Publisher::initialize(
 void Publisher::publish(const Image & msg, const PublishFn & publish_fn) const
 {
   Publisher * me = const_cast<Publisher *>(this);
+  me->publishFunction_ = &publish_fn;
   if (!me->encoder_.isInitialized()) {
-    me->publishFunction_ = &publish_fn;
     if (!me->encoder_.initialize(
           msg.width, msg.height,
           std::bind(&Publisher::packetReady, me, _1, _2, _3, _4, _5, _6, _7, _8, _9))) {
