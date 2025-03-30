@@ -2,8 +2,8 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.2 (2025-03-30)
+------------------
 * Merge branch 'master' into release
 * Fix segfault: the publish_fn address passed to publish() cannot be cached!
 * Contributors: Michal Sojka
