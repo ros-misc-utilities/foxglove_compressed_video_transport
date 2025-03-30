@@ -2,6 +2,12 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into release
+* Fix segfault: the publish_fn address passed to publish() cannot be cached!
+* Contributors: Michal Sojka
+
 1.0.1 (2024-11-18)
 ------------------
 * Fill empty message fields (`#1 <https://github.com/ros-misc-utilities/foxglove_compressed_video_transport/issues/1>`_)
