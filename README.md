@@ -86,7 +86,7 @@ your publisher node (camera driver), you can give it a parameter list on the way
                 {
                     '.image_raw.foxglove.encoding': 'h264_vaapi',  # 'libx264'
                     '.image_raw.foxglove.profile': 'main',
-                    '.image_raw.floxglove.preset': 'll',
+                    '.image_raw.foxglove.preset': 'll',
                 },
             ],
 ```
