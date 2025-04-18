@@ -49,7 +49,7 @@ static const ParameterDefinition params[] = {
   {ParameterValue(""), ParameterDescriptor()
                       .set__name("crf")
                       .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
-                      .set__description("ffmpeg crf")
+                      .set__description("ffmpeg encoder crf")
                       .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("pixel_format")
