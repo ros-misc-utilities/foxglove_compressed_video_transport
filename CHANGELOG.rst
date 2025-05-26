@@ -2,8 +2,8 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.3 (2025-05-26)
+------------------
 * avoid ament_target_dependencies
 * Add Constant Rate Factor,  Co-authored-by: Angsa Deployment Team <team@angsa-robotics.com>
 * Update README.md
