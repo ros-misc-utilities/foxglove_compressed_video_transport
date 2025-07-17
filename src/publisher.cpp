@@ -101,7 +101,7 @@ static const ParameterDefinition params[] = {
                             .set__step(1)})},
 };
 
-Publisher::Publisher() : logger_(rclcpp::get_logger("Publisher")) {}
+Publisher::Publisher() : logger_(rclcpp::get_logger("FoxglovePublisher")) {}
 
 Publisher::~Publisher() {}
 
@@ -123,19 +123,19 @@ void Publisher::declareParameter(
     v = node->get_parameter(param_name).get_parameter_value();
   }
   const auto & n = definition.descriptor.name;
-  if (n == "encoding") {
+  if (n == "encoding" || n == "encoder") {
     encoder_.setEncoder(v.get<std::string>());
-    RCLCPP_INFO_STREAM(logger_, "using encoder: " << v.get<std::string>());
+    RCLCPP_INFO_STREAM(logger_, "using libav encoder: " << v.get<std::string>());
   } else if (n == "preset") {
-    encoder_.setPreset(v.get<std::string>());
+    encoder_.addAVOption("preset", v.get<std::string>());
   } else if (n == "tune") {
-    encoder_.setTune(v.get<std::string>());
+    encoder_.addAVOption("tune", v.get<std::string>());
   } else if (n == "delay") {
-    encoder_.setDelay(v.get<std::string>());
+    encoder_.addAVOption("delay", v.get<std::string>());
   } else if (n == "crf") {
-    encoder_.setCRF(v.get<std::string>());
+    encoder_.addAVOption("crf", v.get<std::string>());
   } else if (n == "pixel_format") {
-    encoder_.setPixelFormat(v.get<std::string>());
+    encoder_.setAVSourcePixelFormat(v.get<std::string>());
   } else if (n == "qmax") {
     encoder_.setQMax(v.get<int>());
   } else if (n == "bit_rate") {
