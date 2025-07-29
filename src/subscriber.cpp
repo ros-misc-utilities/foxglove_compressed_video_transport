@@ -30,6 +30,15 @@ Subscriber::~Subscriber() {}
 
 void Subscriber::frameReady(const ImageConstPtr & img, bool) const { (*userCallback_)(img); }
 
+#ifdef IMAGE_TRANSPORT_USE_QOS
+static rclcpp::QoS convert_profile(const rmw_qos_profile_t & p)
+{
+  return (rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(p), p));
+}
+#else
+static const rmw_qos_profile_t & convert_profile(const rmw_qos_profile_t & p) { return (p); }
+#endif
+
 #ifdef IMAGE_TRANSPORT_API_V1
 void Subscriber::subscribeImpl(
   rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
@@ -48,10 +57,10 @@ void Subscriber::subscribeImpl(
 #ifdef IMAGE_TRANSPORT_API_V2
   (void)opt;  // to suppress compiler warning
   image_transport::SimpleSubscriberPlugin<CompressedVideo>::subscribeImpl(
-    node, base_topic, callback, custom_qos);
+    node, base_topic, callback, convert_profile(custom_qos));
 #else
   image_transport::SimpleSubscriberPlugin<CompressedVideo>::subscribeImpl(
-    node, base_topic, callback, custom_qos, opt);
+    node, base_topic, callback, convert_profile(custom_qos), opt);
 #endif
 }
 #endif

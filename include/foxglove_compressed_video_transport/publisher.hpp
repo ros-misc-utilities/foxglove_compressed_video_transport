@@ -31,6 +31,11 @@ using PacketConstPtr = CompressedVideo::ConstSharedPtr;
 class Publisher : public image_transport::SimplePublisherPlugin<CompressedVideo>
 {
 public:
+#if defined USE_PUBLISHER_T
+  using PublisherTFn = PublisherT;
+#else
+  using PublisherTFn = PublishFn;
+#endif
   using ParameterDescriptor = rcl_interfaces::msg::ParameterDescriptor;
   using ParameterValue = rclcpp::ParameterValue;
   struct ParameterDefinition
@@ -51,7 +56,7 @@ protected:
     rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos,
     rclcpp::PublisherOptions opt) override;
 #endif
-  void publish(const Image & message, const PublishFn & publish_fn) const override;
+  void publish(const Image & message, const PublisherTFn & publish_fn) const override;
 
 private:
   void packetReady(
@@ -65,7 +70,7 @@ private:
 
   // variables ---------
   rclcpp::Logger logger_;
-  const PublishFn * publishFunction_{NULL};
+  const PublisherTFn * publishFunction_{nullptr};
   ffmpeg_encoder_decoder::Encoder encoder_;
   uint32_t frameCounter_{0};
   // ---------- configurable parameters

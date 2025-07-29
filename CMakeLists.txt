@@ -37,6 +37,11 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
 
+if(${image_transport_VERSION} VERSION_GREATER_EQUAL "6.3.0")
+  add_definitions(-DIMAGE_TRANSPORT_USE_QOS)
+  add_definitions(-DUSE_PUBLISHER_T)
+endif()
+
 set(LIBRARY_NAME ${PROJECT_NAME}_component)
 
 add_library(

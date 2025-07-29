@@ -166,8 +166,11 @@ void Publisher::packetReady(
   msg->timestamp = stamp;
   msg->format = "h264";
   msg->data.assign(data, data + sz);
-
+#ifdef USE_PUBLISHER_T
+  (*publishFunction_)->publish(*msg);
+#else
   (*publishFunction_)(*msg);
+#endif
 }
 
 #if defined(IMAGE_TRANSPORT_API_V1) || defined(IMAGE_TRANSPORT_API_V2)
@@ -203,7 +206,7 @@ rmw_qos_profile_t Publisher::initialize(
   return (custom_qos);
 }
 
-void Publisher::publish(const Image & msg, const PublishFn & publish_fn) const
+void Publisher::publish(const Image & msg, const PublisherTFn & publish_fn) const
 {
   Publisher * me = const_cast<Publisher *>(this);
   me->publishFunction_ = &publish_fn;
