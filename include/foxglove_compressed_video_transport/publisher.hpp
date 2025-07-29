@@ -67,7 +67,7 @@ private:
     rclcpp::Node * node, const std::string & base_name, rmw_qos_profile_t custom_qos);
   void declareParameter(
     rclcpp::Node * node, const std::string & base_name, const ParameterDefinition & definition);
-
+  void handleAVOptions(const std::string & opt);
   // variables ---------
   rclcpp::Logger logger_;
   const PublisherTFn * publishFunction_{nullptr};

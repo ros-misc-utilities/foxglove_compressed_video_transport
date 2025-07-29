@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <ffmpeg_encoder_decoder/safe_param.hpp>
+#include <ffmpeg_encoder_decoder/utils.hpp>
 #include <foxglove_compressed_video_transport/subscriber.hpp>
 #include <functional>
 #include <unordered_map>
@@ -22,8 +23,6 @@ using namespace std::placeholders;
 
 namespace foxglove_compressed_video_transport
 {
-static const char nsc[] = "foxglove_compressed_video_transport.map.";
-
 Subscriber::Subscriber() : logger_(rclcpp::get_logger("Subscriber")) {}
 
 Subscriber::~Subscriber() {}
@@ -44,7 +43,7 @@ void Subscriber::subscribeImpl(
   rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
   rmw_qos_profile_t custom_qos)
 {
-  initialize(node);
+  initialize(node, base_topic);
   image_transport::SimpleSubscriberPlugin<CompressedVideo>::subscribeImpl(
     node, base_topic, callback, custom_qos);
 }
@@ -53,7 +52,7 @@ void Subscriber::subscribeImpl(
   rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
   rmw_qos_profile_t custom_qos, rclcpp::SubscriptionOptions opt)
 {
-  initialize(node);
+  initialize(node, base_topic);
 #ifdef IMAGE_TRANSPORT_API_V2
   (void)opt;  // to suppress compiler warning
   image_transport::SimpleSubscriberPlugin<CompressedVideo>::subscribeImpl(
@@ -65,13 +64,13 @@ void Subscriber::subscribeImpl(
 }
 #endif
 
-void Subscriber::initialize(rclcpp::Node * node)
+void Subscriber::initialize(rclcpp::Node * node, const std::string & base_topic)
 {
   node_ = node;
-  const std::string ns(nsc);
-  const bool mp =
-    ffmpeg_encoder_decoder::get_safe_param<bool>(node_, ns + "measure_performance", false);
-  decoder_.setMeasurePerformance(mp);
+  uint ns_len = node_->get_effective_namespace().length();
+  std::string param_base_name = base_topic.substr(ns_len);
+  std::replace(param_base_name.begin(), param_base_name.end(), '/', '.');
+  param_namespace_ = param_base_name + "." + getTransportName() + ".";
 }
 
 void Subscriber::internalCallback(const CompressedVideoConstPtr & msg, const Callback & user_cb)
@@ -81,15 +80,16 @@ void Subscriber::internalCallback(const CompressedVideoConstPtr & msg, const Cal
       RCLCPP_ERROR_STREAM(logger_, "no encoding provided!");
       return;
     }
+    decoder_.setMeasurePerformance(ffmpeg_encoder_decoder::get_safe_param<bool>(
+      node_, param_namespace_ + "measure_performance", false));
+
     userCallback_ = &user_cb;
-    const std::string decoder =
-      ffmpeg_encoder_decoder::get_safe_param<std::string>(node_, nsc + msg->format, "h264");
-    if (decoder.empty()) {
-      RCLCPP_ERROR_STREAM(logger_, "no valid decoder found for encoding: " << msg->format);
-      return;
-    }
+    const auto decoders = ffmpeg_encoder_decoder::utils::split_by_char(
+      ffmpeg_encoder_decoder::get_safe_param<std::string>(
+        node_, param_namespace_ + "map." + msg->format, "h264"),
+      ',');
     if (!decoder_.initialize(
-          msg->format, std::bind(&Subscriber::frameReady, this, _1, _2), decoder)) {
+          msg->format, std::bind(&Subscriber::frameReady, this, _1, _2), decoders)) {
       RCLCPP_ERROR_STREAM(logger_, "cannot initialize decoder!");
       return;
     }

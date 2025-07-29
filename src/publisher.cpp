@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <ffmpeg_encoder_decoder/safe_param.hpp>
+#include <ffmpeg_encoder_decoder/utils.hpp>
 #include <foxglove_compressed_video_transport/publisher.hpp>
 
 using namespace std::placeholders;
@@ -27,9 +28,15 @@ using ParameterDescriptor = Publisher::ParameterDescriptor;
 static const ParameterDefinition params[] = {
   {ParameterValue("libx264"),
    ParameterDescriptor()
-     .set__name("encoding")
+     .set__name("encoder")
      .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
      .set__description("ffmpeg encoder to use, see ffmpeg h264 supported encoders")
+     .set__read_only(false)},
+  {ParameterValue(""),
+   ParameterDescriptor()
+     .set__name("av_options")
+     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+     .set__description("comma-separated list of AV options: profile:main,preset:ll")
      .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("preset")
@@ -115,7 +122,6 @@ void Publisher::declareParameter(
   const std::string param_name =
     base_name + "." + transport_name + "." + definition.descriptor.name;
   rclcpp::ParameterValue v;
-
   try {
     v = node->declare_parameter(param_name, definition.defaultValue, definition.descriptor);
   } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException &) {
@@ -126,14 +132,12 @@ void Publisher::declareParameter(
   if (n == "encoding" || n == "encoder") {
     encoder_.setEncoder(v.get<std::string>());
     RCLCPP_INFO_STREAM(logger_, "using libav encoder: " << v.get<std::string>());
-  } else if (n == "preset") {
-    encoder_.addAVOption("preset", v.get<std::string>());
-  } else if (n == "tune") {
-    encoder_.addAVOption("tune", v.get<std::string>());
-  } else if (n == "delay") {
-    encoder_.addAVOption("delay", v.get<std::string>());
-  } else if (n == "crf") {
-    encoder_.addAVOption("crf", v.get<std::string>());
+  } else if (n == "av_options") {
+    handleAVOptions(v.get<std::string>());
+  } else if (n == "preset" || n == "tune" || n == "delay" || n == "crf") {
+    if (!v.get<std::string>().empty()) {
+      encoder_.addAVOption(n, v.get<std::string>());
+    }
   } else if (n == "pixel_format") {
     encoder_.setAVSourcePixelFormat(v.get<std::string>());
   } else if (n == "qmax") {
@@ -149,6 +153,20 @@ void Publisher::declareParameter(
     performanceInterval_ = v.get<int>();
   } else {
     RCLCPP_ERROR_STREAM(logger_, "unknown parameter: " << n);
+  }
+}
+
+void Publisher::handleAVOptions(const std::string & opt)
+{
+  const auto split = ffmpeg_encoder_decoder::utils::split_by_char(opt, ',');
+  for (const auto & sl : split) {
+    const auto kv = ffmpeg_encoder_decoder::utils::split_by_char(sl, ':');
+    if (kv.size() != 2) {
+      RCLCPP_WARN_STREAM(logger_, "skipping bad AV option: " << sl);
+    } else {
+      encoder_.addAVOption(kv[0], kv[1]);
+      RCLCPP_INFO_STREAM(logger_, "setting AV option " << kv[0] << " to " << kv[1]);
+    }
   }
 }
 

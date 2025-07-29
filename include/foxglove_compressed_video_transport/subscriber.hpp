@@ -51,7 +51,7 @@ protected:
 
 private:
   void frameReady(const ImageConstPtr & img, bool /*isKeyFrame*/) const;
-  void initialize(rclcpp::Node * node);
+  void initialize(rclcpp::Node * node, const std::string & base_topic);
   // -------------- variables
   rclcpp::Logger logger_;
   rclcpp::Node * node_;
@@ -59,6 +59,7 @@ private:
   std::string decoderType_;
   const Callback * userCallback_;
   uint64_t pts_{0};
+  std::string param_namespace_;
 };
 }  // namespace foxglove_compressed_video_transport
 #endif  // FOXGLOVE_COMPRESSED_VIDEO_TRANSPORT__SUBSCRIBER_HPP_
