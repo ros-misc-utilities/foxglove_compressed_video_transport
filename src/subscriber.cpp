@@ -84,10 +84,8 @@ void Subscriber::internalCallback(const CompressedVideoConstPtr & msg, const Cal
       node_, param_namespace_ + "measure_performance", false));
 
     userCallback_ = &user_cb;
-    const auto decoders = ffmpeg_encoder_decoder::utils::split_by_char(
-      ffmpeg_encoder_decoder::get_safe_param<std::string>(
-        node_, param_namespace_ + "map." + msg->format, "h264"),
-      ',');
+    const auto decoders = ffmpeg_encoder_decoder::get_safe_param<std::string>(
+      node_, param_namespace_ + "map." + msg->format, "h264");
     if (!decoder_.initialize(
           msg->format, std::bind(&Subscriber::frameReady, this, _1, _2), decoders)) {
       RCLCPP_ERROR_STREAM(logger_, "cannot initialize decoder!");
