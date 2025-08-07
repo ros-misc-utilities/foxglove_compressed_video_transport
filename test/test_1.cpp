@@ -167,11 +167,10 @@ TEST(foxglove_compressed_video_transport, test_1)
   rclcpp::init(0, nullptr);
   const size_t num_images = 10;
   rclcpp::executors::SingleThreadedExecutor exec;
-
   rclcpp::NodeOptions pub_options;
   auto pub_node = std::make_shared<TestPublisher>(pub_options);
   pub_node->setParameter<std::string>("encoder", "libx264rgb");
-  pub_node->setParameter<std::string>("av_options", "crf:0,tune:zerolatency");
+  pub_node->setParameter<std::string>("encoder_av_options", "crf:0,tune:zerolatency");
   pub_node->setParameter<int>("gop_size", 1);                    // to force immediate publish
   pub_node->setParameter<std::string>("pixel_format", "bgr24");  // needed for lossless!
   pub_node->setNumberOfImages(num_images);
@@ -179,7 +178,7 @@ TEST(foxglove_compressed_video_transport, test_1)
   exec.add_node(pub_node);
   rclcpp::NodeOptions sub_options;
   auto sub_node = std::make_shared<TestSubscriber>(sub_options);
-  sub_node->setParameter<std::string>("map.h264", "h264");
+  sub_node->setParameter<std::string>("decoders.h264", "h264");
   // h264_cuvid does not work because lossless image format yuv444p is not supported
   // sub_node->setParameter<std::string>("map.h264", "h264_cuvid");
   sub_node->initialize();  // only after params have been set!
@@ -187,7 +186,7 @@ TEST(foxglove_compressed_video_transport, test_1)
   while (pub_node->publish_next() && rclcpp::ok()) {
     exec.spin_some();
   }
-  for (int i = 0; i < 100 && rclcpp::ok(); i++) {
+  for (int i = 0; i < 10 && rclcpp::ok(); i++) {
     exec.spin_some();
   }
   pub_node->shutDown();

@@ -36,7 +36,9 @@ find_package(rcutils REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
-
+if(${image_transport_VERSION} VERSION_GREATER_EQUAL "6.0.0")
+  add_definitions(-DIMAGE_TRANSPORT_RESOLVES_BASE_TOPIC)
+endif()
 if(${image_transport_VERSION} VERSION_GREATER_EQUAL "6.3.0")
   add_definitions(-DIMAGE_TRANSPORT_USE_QOS)
   add_definitions(-DUSE_PUBLISHER_T)
@@ -49,6 +51,7 @@ add_library(
   SHARED
   src/publisher.cpp
   src/subscriber.cpp
+  src/parameter_definition.cpp
   src/manifest.cpp)
 
 target_include_directories(${LIBRARY_NAME} PUBLIC

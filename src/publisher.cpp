@@ -34,7 +34,7 @@ static const ParameterDefinition params[] = {
      .set__read_only(false)},
   {ParameterValue(""),
    ParameterDescriptor()
-     .set__name("av_options")
+     .set__name("encoder_av_options")
      .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
      .set__description("comma-separated list of AV options: profile:main,preset:ll")
      .set__read_only(false)},
@@ -132,7 +132,7 @@ void Publisher::declareParameter(
   if (n == "encoding" || n == "encoder") {
     encoder_.setEncoder(v.get<std::string>());
     RCLCPP_INFO_STREAM(logger_, "using libav encoder: " << v.get<std::string>());
-  } else if (n == "av_options") {
+  } else if (n == "encoder_av_options") {
     handleAVOptions(v.get<std::string>());
   } else if (n == "preset" || n == "tune" || n == "delay" || n == "crf") {
     if (!v.get<std::string>().empty()) {
@@ -200,7 +200,7 @@ void Publisher::advertiseImpl(
 }
 #else
 void Publisher::advertiseImpl(
-  rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos,
+  rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos,
   rclcpp::PublisherOptions opt)
 {
   auto qos = initialize(node, base_topic, custom_qos);
@@ -208,8 +208,8 @@ void Publisher::advertiseImpl(
 }
 #endif
 
-rmw_qos_profile_t Publisher::initialize(
-  rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos)
+Publisher::QoSType Publisher::initialize(
+  rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos)
 {
   // namespace handling code lifted from compressed_image_transport
   const uint ns_len = node->get_effective_namespace().length();
@@ -220,7 +220,12 @@ rmw_qos_profile_t Publisher::initialize(
     declareParameter(node, param_base_name, p);
   }
   // bump queue size to 2 * distance between keyframes
+#ifdef IMAGE_TRANSPORT_USE_QOS
+  custom_qos.keep_last(
+    std::max(static_cast<int>(custom_qos.get_rmw_qos_profile().depth), 2 * encoder_.getGOPSize()));
+#else
   custom_qos.depth = std::max(static_cast<int>(custom_qos.depth), 2 * encoder_.getGOPSize());
+#endif
   return (custom_qos);
 }
 
