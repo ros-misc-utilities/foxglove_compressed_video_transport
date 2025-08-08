@@ -31,6 +31,16 @@ using PacketConstPtr = CompressedVideo::ConstSharedPtr;
 class Publisher : public image_transport::SimplePublisherPlugin<CompressedVideo>
 {
 public:
+#if defined USE_PUBLISHER_T
+  using PublisherTFn = PublisherT;
+#else
+  using PublisherTFn = PublishFn;
+#endif
+#ifdef IMAGE_TRANSPORT_USE_QOS
+  using QoSType = rclcpp::QoS;
+#else
+  using QoSType = rmw_qos_profile_t;
+#endif
   using ParameterDescriptor = rcl_interfaces::msg::ParameterDescriptor;
   using ParameterValue = rclcpp::ParameterValue;
   struct ParameterDefinition
@@ -48,24 +58,23 @@ protected:
     rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos) override;
 #else
   void advertiseImpl(
-    rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos,
+    rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos,
     rclcpp::PublisherOptions opt) override;
 #endif
-  void publish(const Image & message, const PublishFn & publish_fn) const override;
+  void publish(const Image & message, const PublisherTFn & publish_fn) const override;
 
 private:
   void packetReady(
     const std::string & frame_id, const rclcpp::Time & stamp, const std::string & codec,
     uint32_t width, uint32_t height, uint64_t pts, uint8_t flags, uint8_t * data, size_t sz);
 
-  rmw_qos_profile_t initialize(
-    rclcpp::Node * node, const std::string & base_name, rmw_qos_profile_t custom_qos);
+  QoSType initialize(rclcpp::Node * node, const std::string & base_name, QoSType custom_qos);
   void declareParameter(
     rclcpp::Node * node, const std::string & base_name, const ParameterDefinition & definition);
-
+  void handleAVOptions(const std::string & opt);
   // variables ---------
   rclcpp::Logger logger_;
-  const PublishFn * publishFunction_{NULL};
+  const PublisherTFn * publishFunction_{nullptr};
   ffmpeg_encoder_decoder::Encoder encoder_;
   uint32_t frameCounter_{0};
   // ---------- configurable parameters

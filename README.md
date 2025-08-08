@@ -3,6 +3,10 @@
 This plugin provides a ROS2 image transport for encoding messages in Foxglove's ``CompressedVideo`` message format, using the FFMpeg library.
 These messages can be recorded in a rosbag for processing with e.g. Foxglove Studio.
 
+Encoding is based on the [ffmpeg\_encoder\_decoder repo](https://github.com/ros-misc-utilities/ffmpeg_encoder_decoder), which explains
+the compression process in more detail.
+Looking at the [ffmpeg_image_transport documentation](https://github.com/ros-misc-utilities/ffmpeg_image_transport) may also be helpful.
+
 There is also an unsupported decoder provided for testing purposes. Use at your own peril.
 
 ## Supported systems
@@ -60,23 +64,30 @@ the one that is decoding (viewing).
 
 Here is a list of the available encoding parameters:
 
-- ``encoding``: the libav (ffmpeg) encoder being used. The default is ``libx264``, which is on-CPU unaccelerated encoding.
+- ``encoder``: the libav (ffmpeg) encoder being used. The default is ``libx264``, which is on-CPU unaccelerated encoding.
   Depending on your hardware, your encoding options may include the hardware accelerated ``h264_nvenc`` or ``h264_vaapi``.
   You can list all available encoders with ``ffmpeg --codecs``. In the h264 row, look for ``(encoders)``.
 - ``preset``: default is empty (""). Valid values can be for instance ``slow``, ``ll`` (low latency) etc.
    To find out what presets are available, run e.g.
    ``ffmpeg -hide_banner -f lavfi -i nullsrc -c:v libx264 -preset help -f mp4 - 2>&1``
+    Note: deprecated, set parameter via ``encoder_av_options`` instead.
 - ``profile``: For instance ``baseline``, ``main``. See [the ffmpeg website](https://trac.ffmpeg.org/wiki/Encode/H.264).
+    Note: deprecated, set parameter via ``encoder_av_options`` instead.
 - ``tune``: See [the ffmpeg website](https://trac.ffmpeg.org/wiki/Encode/H.264). The default is empty("").
+    Note: deprecated, set parameter via ``encoder_av_options`` instead.
 - ``gop_size``: The number of frames between keyframes. For foxglove, this *must be set to 1*.
    The larger this number the more latency you will have, but also the more efficient the transmission becomes.
 - ``bit_rate``: The max bit rate [in bits/s] that the encoding will target. Default is ``8242880`.
-- ``delay``: Not sure what it does, but doesn't help with delay. Default is empty ("").
-- ``pixel_format``: Forces a different pixel format for internal conversions. Experimental, don't use.
+- ``encoder_av_options``: Set comma-separated list of libav encoder options with ``:`` as
+  assignment operator, e.g. ``tune:<foo>,delay:<bar>``.
+- ``delay``: Not sure what it does, but it doesn't help with delay. Default is empty ("").
+    Note: deprecated, set parameter via ``encoder_av_options`` instead.
+- ``pixel_format``: Forces a different pixel format for internal conversions.
+    See the [ffmpeg encoder/decoder repo](https://github.com/ros-misc-utilities/ffmpeg_encoder_decoder) and 
+    the [ffmpeg_image_transport repo](https://github.com/ros-misc-utilities/ffmpeg_image_transport) for more.
 - ``qmax``: Max quantization rate. Defaults to 10. See [ffmpeg documentation](https://www.ffmpeg.org/ffmpeg-codecs.html).
    The larger this number, the worse the image looks, and the more efficient the encoding.
 - ``measure_performance``: For performance debugging (developers only). Defaults to false.
-- ``performance_interval``: How many frames to wait between logging performance data.
 
 The parameters are under the ``foxglove`` variable block. If you launch
 your publisher node (camera driver), you can give it a parameter list on the way like so:
@@ -84,9 +95,9 @@ your publisher node (camera driver), you can give it a parameter list on the way
             parameters=[
                 params_path,
                 {
-                    '.image_raw.foxglove.encoding': 'h264_vaapi',  # 'libx264'
-                    '.image_raw.foxglove.profile': 'main',
-                    '.image_raw.foxglove.preset': 'll',
+                    'image_raw.foxglove.encoder': 'h264_vaapi',  # 'libx264'
+                    'image_raw.foxglove.profile': 'main',
+                    'image_raw.foxglove.preset': 'll',
                 },
             ],
 ```

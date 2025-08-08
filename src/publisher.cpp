@@ -14,7 +14,9 @@
 // limitations under the License.
 
 #include <ffmpeg_encoder_decoder/safe_param.hpp>
+#include <ffmpeg_encoder_decoder/utils.hpp>
 #include <foxglove_compressed_video_transport/publisher.hpp>
+#include <foxglove_compressed_video_transport/utils.hpp>
 
 using namespace std::placeholders;
 
@@ -27,9 +29,15 @@ using ParameterDescriptor = Publisher::ParameterDescriptor;
 static const ParameterDefinition params[] = {
   {ParameterValue("libx264"),
    ParameterDescriptor()
-     .set__name("encoding")
+     .set__name("encoder")
      .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
      .set__description("ffmpeg encoder to use, see ffmpeg h264 supported encoders")
+     .set__read_only(false)},
+  {ParameterValue(""),
+   ParameterDescriptor()
+     .set__name("encoder_av_options")
+     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+     .set__description("comma-separated list of AV options: profile:main,preset:ll")
      .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("preset")
@@ -101,7 +109,7 @@ static const ParameterDefinition params[] = {
                             .set__step(1)})},
 };
 
-Publisher::Publisher() : logger_(rclcpp::get_logger("Publisher")) {}
+Publisher::Publisher() : logger_(rclcpp::get_logger("FoxglovePublisher")) {}
 
 Publisher::~Publisher() {}
 
@@ -115,7 +123,6 @@ void Publisher::declareParameter(
   const std::string param_name =
     base_name + "." + transport_name + "." + definition.descriptor.name;
   rclcpp::ParameterValue v;
-
   try {
     v = node->declare_parameter(param_name, definition.defaultValue, definition.descriptor);
   } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException &) {
@@ -123,19 +130,17 @@ void Publisher::declareParameter(
     v = node->get_parameter(param_name).get_parameter_value();
   }
   const auto & n = definition.descriptor.name;
-  if (n == "encoding") {
+  if (n == "encoding" || n == "encoder") {
     encoder_.setEncoder(v.get<std::string>());
-    RCLCPP_INFO_STREAM(logger_, "using encoder: " << v.get<std::string>());
-  } else if (n == "preset") {
-    encoder_.setPreset(v.get<std::string>());
-  } else if (n == "tune") {
-    encoder_.setTune(v.get<std::string>());
-  } else if (n == "delay") {
-    encoder_.setDelay(v.get<std::string>());
-  } else if (n == "crf") {
-    encoder_.setCRF(v.get<std::string>());
+    RCLCPP_INFO_STREAM(logger_, "using libav encoder: " << v.get<std::string>());
+  } else if (n == "encoder_av_options") {
+    handleAVOptions(v.get<std::string>());
+  } else if (n == "preset" || n == "tune" || n == "delay" || n == "crf") {
+    if (!v.get<std::string>().empty()) {
+      encoder_.addAVOption(n, v.get<std::string>());
+    }
   } else if (n == "pixel_format") {
-    encoder_.setPixelFormat(v.get<std::string>());
+    encoder_.setAVSourcePixelFormat(v.get<std::string>());
   } else if (n == "qmax") {
     encoder_.setQMax(v.get<int>());
   } else if (n == "bit_rate") {
@@ -149,6 +154,20 @@ void Publisher::declareParameter(
     performanceInterval_ = v.get<int>();
   } else {
     RCLCPP_ERROR_STREAM(logger_, "unknown parameter: " << n);
+  }
+}
+
+void Publisher::handleAVOptions(const std::string & opt)
+{
+  const auto split = utils::splitAVOptions(opt);
+  for (const auto & sl : split) {
+    const auto kv = utils::splitAVOption(sl);
+    if (kv.size() != 2) {
+      RCLCPP_WARN_STREAM(logger_, "skipping bad AV option: " << sl);
+    } else {
+      encoder_.addAVOption(kv[0], kv[1]);
+      RCLCPP_INFO_STREAM(logger_, "setting AV option " << kv[0] << " to " << kv[1]);
+    }
   }
 }
 
@@ -166,8 +185,11 @@ void Publisher::packetReady(
   msg->timestamp = stamp;
   msg->format = "h264";
   msg->data.assign(data, data + sz);
-
+#ifdef USE_PUBLISHER_T
+  (*publishFunction_)->publish(*msg);
+#else
   (*publishFunction_)(*msg);
+#endif
 }
 
 #if defined(IMAGE_TRANSPORT_API_V1) || defined(IMAGE_TRANSPORT_API_V2)
@@ -179,7 +201,7 @@ void Publisher::advertiseImpl(
 }
 #else
 void Publisher::advertiseImpl(
-  rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos,
+  rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos,
   rclcpp::PublisherOptions opt)
 {
   auto qos = initialize(node, base_topic, custom_qos);
@@ -187,8 +209,8 @@ void Publisher::advertiseImpl(
 }
 #endif
 
-rmw_qos_profile_t Publisher::initialize(
-  rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos)
+Publisher::QoSType Publisher::initialize(
+  rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos)
 {
   // namespace handling code lifted from compressed_image_transport
   const uint ns_len = node->get_effective_namespace().length();
@@ -199,18 +221,24 @@ rmw_qos_profile_t Publisher::initialize(
     declareParameter(node, param_base_name, p);
   }
   // bump queue size to 2 * distance between keyframes
+#ifdef IMAGE_TRANSPORT_USE_QOS
+  custom_qos.keep_last(
+    std::max(static_cast<int>(custom_qos.get_rmw_qos_profile().depth), 2 * encoder_.getGOPSize()));
+#else
   custom_qos.depth = std::max(static_cast<int>(custom_qos.depth), 2 * encoder_.getGOPSize());
+#endif
   return (custom_qos);
 }
 
-void Publisher::publish(const Image & msg, const PublishFn & publish_fn) const
+void Publisher::publish(const Image & msg, const PublisherTFn & publish_fn) const
 {
   Publisher * me = const_cast<Publisher *>(this);
   me->publishFunction_ = &publish_fn;
   if (!me->encoder_.isInitialized()) {
     if (!me->encoder_.initialize(
           msg.width, msg.height,
-          std::bind(&Publisher::packetReady, me, _1, _2, _3, _4, _5, _6, _7, _8, _9))) {
+          std::bind(&Publisher::packetReady, me, _1, _2, _3, _4, _5, _6, _7, _8, _9),
+          msg.encoding)) {
       RCLCPP_ERROR_STREAM(logger_, "cannot initialize encoder!");
       return;
     }
