@@ -26,7 +26,6 @@ namespace foxglove_compressed_video_transport
 {
 using PValue = ParameterDefinition::ParameterValue;
 using PDescriptor = ParameterDefinition::ParameterDescriptor;
-using ffmpeg_encoder_decoder::utils::split_by_char;
 
 Subscriber::Subscriber() : logger_(rclcpp::get_logger("FoxgloveSubscriber")) {}
 
@@ -90,7 +89,7 @@ void Subscriber::initialize(rclcpp::Node * node, const std::string & base_topic_
 
 std::string Subscriber::getDecodersFromMap(const std::string & encoding)
 {
-  const auto x = split_by_char(encoding, ';');
+  const auto x = ffmpeg_encoder_decoder::utils::split_encoding(encoding);
   std::string decoders;
   // successively create parameters that are more and more generic,
   // i.e. hevc.yuv
@@ -123,7 +122,7 @@ void Subscriber::internalCallback(const CompressedVideoConstPtr & msg, const Cal
     return;
   }
   userCallback_ = &user_cb;
-  const auto codec = split_by_char(msg->format, ';')[0];
+  const auto codec = ffmpeg_encoder_decoder::utils::split_encoding(msg->format)[0];
   std::string decoder_names = getDecodersFromMap(msg->format);
   decoder_names = ffmpeg_encoder_decoder::utils::filter_decoders(codec, decoder_names);
   if (decoder_names.empty()) {
@@ -139,7 +138,7 @@ void Subscriber::internalCallback(const CompressedVideoConstPtr & msg, const Cal
   }
   RCLCPP_INFO_STREAM(logger_, "trying decoders in order: " << decoder_names);
 
-  for (const auto & dec : split_by_char(decoder_names, ',')) {
+  for (const auto & dec : ffmpeg_encoder_decoder::utils::split_decoders(decoder_names)) {
     try {
       if (!decoder_.initialize(
             msg->format, std::bind(&Subscriber::frameReady, this, _1, _2), dec)) {

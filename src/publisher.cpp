@@ -16,6 +16,7 @@
 #include <ffmpeg_encoder_decoder/safe_param.hpp>
 #include <ffmpeg_encoder_decoder/utils.hpp>
 #include <foxglove_compressed_video_transport/publisher.hpp>
+#include <foxglove_compressed_video_transport/utils.hpp>
 
 using namespace std::placeholders;
 
@@ -158,9 +159,9 @@ void Publisher::declareParameter(
 
 void Publisher::handleAVOptions(const std::string & opt)
 {
-  const auto split = ffmpeg_encoder_decoder::utils::split_by_char(opt, ',');
+  const auto split = utils::splitAVOptions(opt);
   for (const auto & sl : split) {
-    const auto kv = ffmpeg_encoder_decoder::utils::split_by_char(sl, ':');
+    const auto kv = utils::splitAVOption(sl);
     if (kv.size() != 2) {
       RCLCPP_WARN_STREAM(logger_, "skipping bad AV option: " << sl);
     } else {
