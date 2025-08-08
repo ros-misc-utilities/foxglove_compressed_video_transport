@@ -2,6 +2,18 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* adjust to new image_transport and encoder/decoder API, added tests
+  * adapt to new ffmpeg_encoder_decoder API
+  * adjustments for new image_transport API
+  * added tests
+  * rename "map" parameter to "decoders"
+  * parameters no longer have "." prefix
+  * deal with humble brokenness where base_topic is not prefixed with namespace, but namespace is removed
+  * package splitting functions into utilities file
+* Contributors: Bernd Pfrommer
+
 1.0.3 (2025-05-26)
 ------------------
 * avoid ament_target_dependencies
