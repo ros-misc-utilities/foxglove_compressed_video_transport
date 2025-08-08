@@ -36,6 +36,13 @@ find_package(rcutils REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
+if(${image_transport_VERSION} VERSION_GREATER_EQUAL "6.0.0")
+  add_definitions(-DIMAGE_TRANSPORT_RESOLVES_BASE_TOPIC)
+endif()
+if(${image_transport_VERSION} VERSION_GREATER_EQUAL "6.3.0")
+  add_definitions(-DIMAGE_TRANSPORT_USE_QOS)
+  add_definitions(-DUSE_PUBLISHER_T)
+endif()
 
 set(LIBRARY_NAME ${PROJECT_NAME}_component)
 
@@ -44,6 +51,8 @@ add_library(
   SHARED
   src/publisher.cpp
   src/subscriber.cpp
+  src/parameter_definition.cpp
+  src/utils.cpp
   src/manifest.cpp)
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
@@ -116,6 +125,14 @@ if(BUILD_TESTING)
   endif()
   ament_clang_format(CONFIG_FILE .clang-format)
   ament_xmllint()
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(${PROJECT_NAME}_test test/test_1.cpp
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+  target_include_directories(${PROJECT_NAME}_test PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+  target_link_libraries(${PROJECT_NAME}_test
+    ${sensor_msgs_TARGETS} rclcpp::rclcpp image_transport::image_transport)
 endif()
 
 ament_package()

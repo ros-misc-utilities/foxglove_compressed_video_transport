@@ -27,12 +27,17 @@ using Image = sensor_msgs::msg::Image;
 using ImageConstPtr = Image::ConstSharedPtr;
 using foxglove_msgs::msg::CompressedVideo;
 using CompressedVideoConstPtr = CompressedVideo::ConstSharedPtr;
+#ifdef IMAGE_TRANSPORT_USE_QOS
+using QoSType = rclcpp::QoS;
+#else
+using QoSType = rmw_qos_profile_t;
+#endif
 
 class Subscriber : public image_transport::SimpleSubscriberPlugin<CompressedVideo>
 {
 public:
   Subscriber();
-  ~Subscriber();
+  ~Subscriber() override;
 
   std::string getTransportName() const override { return "foxglove"; }
 
@@ -42,16 +47,18 @@ protected:
 #ifdef IMAGE_TRANSPORT_API_V1
   void subscribeImpl(
     rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
-    rmw_qos_profile_t custom_qos) override;
+    QoSType custom_qos) override;
 #else
   void subscribeImpl(
     rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
-    rmw_qos_profile_t custom_qos, rclcpp::SubscriptionOptions) override;
+    QoSType custom_qos, rclcpp::SubscriptionOptions) override;
 #endif
+  void shutdown() override;
 
 private:
   void frameReady(const ImageConstPtr & img, bool /*isKeyFrame*/) const;
-  void initialize(rclcpp::Node * node);
+  void initialize(rclcpp::Node * node, const std::string & base_topic);
+  std::string getDecodersFromMap(const std::string & encoding);
   // -------------- variables
   rclcpp::Logger logger_;
   rclcpp::Node * node_;
@@ -59,6 +66,7 @@ private:
   std::string decoderType_;
   const Callback * userCallback_;
   uint64_t pts_{0};
+  std::string paramNamespace_;
 };
 }  // namespace foxglove_compressed_video_transport
 #endif  // FOXGLOVE_COMPRESSED_VIDEO_TRANSPORT__SUBSCRIBER_HPP_
