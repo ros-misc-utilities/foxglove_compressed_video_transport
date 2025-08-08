@@ -61,7 +61,7 @@ void Subscriber::subscribeImpl(
 #ifdef IMAGE_TRANSPORT_API_V2
   (void)opt;  // to suppress compiler warning
   image_transport::SimpleSubscriberPlugin<CompressedVideo>::subscribeImpl(
-    node, base_topic, callback, custom_qos));
+    node, base_topic, callback, custom_qos);
 #else
   image_transport::SimpleSubscriberPlugin<CompressedVideo>::subscribeImpl(
     node, base_topic, callback, custom_qos, opt);
