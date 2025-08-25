@@ -2,6 +2,11 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix param dump bug by changing decoder param sep from . to \_
+* Contributors: Bernd Pfrommer
+
 3.0.0 (2025-08-08)
 ------------------
 * adjust to new image_transport and encoder/decoder API, added tests
