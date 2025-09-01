@@ -22,52 +22,52 @@ using namespace std::placeholders;
 
 namespace foxglove_compressed_video_transport
 {
-using ParameterDefinition = Publisher::ParameterDefinition;
-using ParameterValue = Publisher::ParameterValue;
-using ParameterDescriptor = Publisher::ParameterDescriptor;
+using ParameterValue = ParameterDefinition::ParameterValue;
+using ParameterDescriptor = ParameterDefinition::ParameterDescriptor;
+using ParameterType = rcl_interfaces::msg::ParameterType;
 
 static const ParameterDefinition params[] = {
   {ParameterValue("libx264"),
    ParameterDescriptor()
      .set__name("encoder")
-     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+     .set__type(ParameterType::PARAMETER_STRING)
      .set__description("ffmpeg encoder to use, see ffmpeg h264 supported encoders")
      .set__read_only(false)},
   {ParameterValue(""),
    ParameterDescriptor()
      .set__name("encoder_av_options")
-     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+     .set__type(ParameterType::PARAMETER_STRING)
      .set__description("comma-separated list of AV options: profile:main,preset:ll")
      .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("preset")
-                         .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+                         .set__type(ParameterType::PARAMETER_STRING)
                          .set__description("ffmpeg encoder preset")
                          .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("tune")
-                         .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+                         .set__type(ParameterType::PARAMETER_STRING)
                          .set__description("ffmpeg encoder tune")
                          .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("delay")
-                         .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+                         .set__type(ParameterType::PARAMETER_STRING)
                          .set__description("ffmpeg encoder delay")
                          .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("crf")
-                         .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+                         .set__type(ParameterType::PARAMETER_STRING)
                          .set__description("ffmpeg encoder crf")
                          .set__read_only(false)},
   {ParameterValue(""), ParameterDescriptor()
                          .set__name("pixel_format")
-                         .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_STRING)
+                         .set__type(ParameterType::PARAMETER_STRING)
                          .set__description("pixel format to use for encoding")
                          .set__read_only(false)},
   {ParameterValue(static_cast<int>(10)),
    ParameterDescriptor()
      .set__name("qmax")
-     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER)
+     .set__type(ParameterType::PARAMETER_INTEGER)
      .set__description("max video quantizer scale, see ffmpeg docs")
      .set__read_only(false)
      .set__integer_range(
@@ -75,7 +75,7 @@ static const ParameterDefinition params[] = {
   {ParameterValue(static_cast<int64_t>(8242880)),
    ParameterDescriptor()
      .set__name("bit_rate")
-     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER)
+     .set__type(ParameterType::PARAMETER_INTEGER)
      .set__description("target bit rate, see ffmpeg docs")
      .set__read_only(false)
      .set__integer_range({rcl_interfaces::msg::IntegerRange()
@@ -85,7 +85,7 @@ static const ParameterDefinition params[] = {
   {ParameterValue(static_cast<int>(1)),
    ParameterDescriptor()
      .set__name("gop_size")
-     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER)
+     .set__type(ParameterType::PARAMETER_INTEGER)
      .set__description("gop size (distance between keyframes)")
      .set__read_only(false)
      .set__integer_range({rcl_interfaces::msg::IntegerRange()
@@ -94,13 +94,13 @@ static const ParameterDefinition params[] = {
                             .set__step(1)})},
   {ParameterValue(false), ParameterDescriptor()
                             .set__name("measure_performance")
-                            .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_BOOL)
+                            .set__type(ParameterType::PARAMETER_BOOL)
                             .set__description("enable performance timing")
                             .set__read_only(false)},
   {ParameterValue(static_cast<int>(175)),
    ParameterDescriptor()
      .set__name("performance_interval")
-     .set__type(rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER)
+     .set__type(ParameterType::PARAMETER_INTEGER)
      .set__description("after how many frames to print perf info")
      .set__read_only(false)
      .set__integer_range({rcl_interfaces::msg::IntegerRange()
@@ -115,20 +115,10 @@ Publisher::~Publisher() {}
 
 // This code was lifted from compressed_image_transport
 
-void Publisher::declareParameter(
-  rclcpp::Node * node, const std::string & base_name, const ParameterDefinition & definition)
+void Publisher::declareParameter(NodeType node, const ParameterDefinition & definition)
 {
   // transport scoped parameter (e.g. image_raw.compressed.format)
-  const std::string transport_name = getTransportName();
-  const std::string param_name =
-    base_name + "." + transport_name + "." + definition.descriptor.name;
-  rclcpp::ParameterValue v;
-  try {
-    v = node->declare_parameter(param_name, definition.defaultValue, definition.descriptor);
-  } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException &) {
-    RCLCPP_DEBUG(logger_, "%s was previously declared", definition.descriptor.name.c_str());
-    v = node->get_parameter(param_name).get_parameter_value();
-  }
+  const auto v = definition.declare(node, paramNamespace_);
   const auto & n = definition.descriptor.name;
   if (n == "encoding" || n == "encoder") {
     encoder_.setEncoder(v.get<std::string>());
@@ -185,40 +175,47 @@ void Publisher::packetReady(
   msg->timestamp = stamp;
   msg->format = "h264";
   msg->data.assign(data, data + sz);
-#ifdef USE_PUBLISHER_T
+#ifdef IMAGE_TRANSPORT_USE_PUBLISHER_T
   (*publishFunction_)->publish(*msg);
 #else
   (*publishFunction_)(*msg);
 #endif
 }
 
-#if defined(IMAGE_TRANSPORT_API_V1) || defined(IMAGE_TRANSPORT_API_V2)
+#ifdef IMAGE_TRANSPORT_NEEDS_PUBLISHEROPTIONS
 void Publisher::advertiseImpl(
-  rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos)
-{
-  auto qos = initialize(node, base_topic, custom_qos);
-  SimplePublisherPlugin<CompressedVideo>::advertiseImpl(node, base_topic, qos);
-}
-#else
-void Publisher::advertiseImpl(
-  rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos,
-  rclcpp::PublisherOptions opt)
+  NodeType node, const std::string & base_topic, QoSType custom_qos, rclcpp::PublisherOptions opt)
 {
   auto qos = initialize(node, base_topic, custom_qos);
   SimplePublisherPlugin<CompressedVideo>::advertiseImpl(node, base_topic, qos, opt);
 }
+#else
+void Publisher::advertiseImpl(
+  NodeType node, const std::string & base_topic, rmw_qos_profile_t custom_qos)
+{
+  auto qos = initialize(node, base_topic, custom_qos);
+  SimplePublisherPlugin<CompressedVideo>::advertiseImpl(node, base_topic, qos);
+}
 #endif
 
 Publisher::QoSType Publisher::initialize(
-  rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos)
+  NodeType node, const std::string & base_topic, QoSType custom_qos)
 {
   // namespace handling code lifted from compressed_image_transport
-  const uint ns_len = node->get_effective_namespace().length();
-  std::string param_base_name = base_topic.substr(ns_len);
+#ifdef IMAGE_TRANSPORT_USE_NODEINTERFACE
+  uint ns_len = std::string(node.get_node_base_interface()->get_namespace()).length();
+#else
+  uint ns_len = node->get_effective_namespace().length();
+#endif
+  // if a namespace is given (ns_len > 1), then strip one more
+  // character to avoid a leading "/" that will then become a "."
+  uint ns_prefix_len = ns_len > 1 ? ns_len + 1 : ns_len;
+  std::string param_base_name = base_topic.substr(ns_prefix_len);
   std::replace(param_base_name.begin(), param_base_name.end(), '/', '.');
+  paramNamespace_ = param_base_name + "." + getTransportName() + ".";
 
   for (const auto & p : params) {
-    declareParameter(node, param_base_name, p);
+    declareParameter(node, p);
   }
   // bump queue size to 2 * distance between keyframes
 #ifdef IMAGE_TRANSPORT_USE_QOS

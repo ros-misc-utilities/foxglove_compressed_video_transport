@@ -17,6 +17,7 @@
 #define FOXGLOVE_COMPRESSED_VIDEO_TRANSPORT__PUBLISHER_HPP_
 
 #include <ffmpeg_encoder_decoder/encoder.hpp>
+#include <foxglove_compressed_video_transport/parameter_definition.hpp>
 #include <foxglove_msgs/msg/compressed_video.hpp>
 #include <image_transport/simple_publisher_plugin.hpp>
 #include <memory>
@@ -31,7 +32,7 @@ using PacketConstPtr = CompressedVideo::ConstSharedPtr;
 class Publisher : public image_transport::SimplePublisherPlugin<CompressedVideo>
 {
 public:
-#if defined USE_PUBLISHER_T
+#ifdef IMAGE_TRANSPORT_USE_PUBLISHER_T
   using PublisherTFn = PublisherT;
 #else
   using PublisherTFn = PublishFn;
@@ -41,25 +42,22 @@ public:
 #else
   using QoSType = rmw_qos_profile_t;
 #endif
-  using ParameterDescriptor = rcl_interfaces::msg::ParameterDescriptor;
-  using ParameterValue = rclcpp::ParameterValue;
-  struct ParameterDefinition
-  {
-    ParameterValue defaultValue;
-    ParameterDescriptor descriptor;
-  };
+#ifdef IMAGE_TRANSPORT_USE_NODEINTERFACE
+  using NodeType = image_transport::RequiredInterfaces;
+#else
+  using NodeType = rclcpp::Node *;
+#endif
   Publisher();
   ~Publisher() override;
   std::string getTransportName() const override { return "foxglove"; }
 
 protected:
-#if defined(IMAGE_TRANSPORT_API_V1) || defined(IMAGE_TRANSPORT_API_V2)
+#ifdef IMAGE_TRANSPORT_NEEDS_PUBLISHEROPTIONS
   void advertiseImpl(
-    rclcpp::Node * node, const std::string & base_topic, rmw_qos_profile_t custom_qos) override;
-#else
-  void advertiseImpl(
-    rclcpp::Node * node, const std::string & base_topic, QoSType custom_qos,
+    NodeType node, const std::string & base_topic, QoSType custom_qos,
     rclcpp::PublisherOptions opt) override;
+#else
+  void advertiseImpl(NodeType node, const std::string & base_topic, QoSType custom_qos) override;
 #endif
   void publish(const Image & message, const PublisherTFn & publish_fn) const override;
 
@@ -68,15 +66,15 @@ private:
     const std::string & frame_id, const rclcpp::Time & stamp, const std::string & codec,
     uint32_t width, uint32_t height, uint64_t pts, uint8_t flags, uint8_t * data, size_t sz);
 
-  QoSType initialize(rclcpp::Node * node, const std::string & base_name, QoSType custom_qos);
-  void declareParameter(
-    rclcpp::Node * node, const std::string & base_name, const ParameterDefinition & definition);
+  QoSType initialize(NodeType node, const std::string & base_name, QoSType custom_qos);
+  void declareParameter(NodeType node, const ParameterDefinition & definition);
   void handleAVOptions(const std::string & opt);
   // variables ---------
   rclcpp::Logger logger_;
   const PublisherTFn * publishFunction_{nullptr};
   ffmpeg_encoder_decoder::Encoder encoder_;
   uint32_t frameCounter_{0};
+  std::string paramNamespace_;
   // ---------- configurable parameters
   int performanceInterval_{175};  // num frames between perf printouts
   bool measurePerformance_{false};
