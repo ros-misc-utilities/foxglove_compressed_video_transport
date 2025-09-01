@@ -16,6 +16,7 @@
 #ifndef FOXGLOVE_COMPRESSED_VIDEO_TRANSPORT__PARAMETER_DEFINITION_HPP_
 #define FOXGLOVE_COMPRESSED_VIDEO_TRANSPORT__PARAMETER_DEFINITION_HPP_
 
+#include <image_transport/image_transport.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace foxglove_compressed_video_transport
@@ -24,8 +25,12 @@ struct ParameterDefinition
 {
   using ParameterDescriptor = rcl_interfaces::msg::ParameterDescriptor;
   using ParameterValue = rclcpp::ParameterValue;
-
-  rclcpp::ParameterValue declare(rclcpp::Node * node, const std::string & paramBase) const;
+#ifdef IMAGE_TRANSPORT_USE_NODEINTERFACE
+  using NodeType = image_transport::RequiredInterfaces;
+#else
+  using NodeType = rclcpp::Node *;
+#endif
+  rclcpp::ParameterValue declare(NodeType node, const std::string & paramBase) const;
   // ---- variables
   ParameterValue defaultValue;
   ParameterDescriptor descriptor;
