@@ -2,8 +2,8 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.2 (2025-09-01)
+------------------
 * support new image transport node interface
 * Contributors: Bernd Pfrommer
 
