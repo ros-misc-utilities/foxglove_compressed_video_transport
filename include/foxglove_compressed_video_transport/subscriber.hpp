@@ -32,6 +32,11 @@ using QoSType = rclcpp::QoS;
 #else
 using QoSType = rmw_qos_profile_t;
 #endif
+#ifdef IMAGE_TRANSPORT_USE_NODEINTERFACE
+using NodeType = image_transport::RequiredInterfaces;
+#else
+using NodeType = rclcpp::Node *;
+#endif
 
 class Subscriber : public image_transport::SimpleSubscriberPlugin<CompressedVideo>
 {
@@ -44,24 +49,19 @@ public:
 protected:
   void internalCallback(const CompressedVideoConstPtr & msg, const Callback & user_cb) override;
 
-#ifdef IMAGE_TRANSPORT_API_V1
   void subscribeImpl(
-    rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
-    QoSType custom_qos) override;
-#else
-  void subscribeImpl(
-    rclcpp::Node * node, const std::string & base_topic, const Callback & callback,
-    QoSType custom_qos, rclcpp::SubscriptionOptions) override;
-#endif
+    NodeType node, const std::string & base_topic, const Callback & callback, QoSType custom_qos,
+    rclcpp::SubscriptionOptions) override;
+
   void shutdown() override;
 
 private:
   void frameReady(const ImageConstPtr & img, bool /*isKeyFrame*/) const;
-  void initialize(rclcpp::Node * node, const std::string & base_topic);
+  void initialize(NodeType node, const std::string & base_topic);
   std::string getDecodersFromMap(const std::string & encoding);
   // -------------- variables
   rclcpp::Logger logger_;
-  rclcpp::Node * node_;
+  NodeType node_;
   ffmpeg_encoder_decoder::Decoder decoder_;
   std::string decoderType_;
   const Callback * userCallback_;
