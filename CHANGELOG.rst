@@ -2,6 +2,11 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* support new image transport node interface
+* Contributors: Bernd Pfrommer
+
 3.0.1 (2025-08-25)
 ------------------
 * fix param dump bug by changing decoder param sep from . to \_
