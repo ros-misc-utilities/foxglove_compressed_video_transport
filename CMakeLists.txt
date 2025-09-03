@@ -22,7 +22,7 @@ find_package(rcutils REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
-if(${image_transport_VERSION} VERSION_GREATER_EQUAL "5.1.7")
+if(${image_transport_VERSION} VERSION_GREATER_EQUAL "5.0.0")
   add_definitions(-DIMAGE_TRANSPORT_USE_PUBLISHER_T)
   add_definitions(-DIMAGE_TRANSPORT_NEEDS_PUBLISHEROPTIONS)
 endif()
