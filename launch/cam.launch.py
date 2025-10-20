@@ -52,9 +52,10 @@ def generate_launch_description():
             parameters=[
                 params_path,
                 {
-                    '.image_raw.foxglove.encoding': 'h264_vaapi',  # 'libx264'
-                    '.image_raw.foxglove.profile': 'main',
-                    '.image_raw.floxglove.preset': 'll',
+                    'image_raw.foxglove.encoder': 'h264_vaapi',  # 'libx264'
+                    'image_raw.foxglove.profile': 'main',
+                    'image_raw.foxglove.gop_size': 1,
+                    'image_raw.foxglove.preset': 'll',
                 },
             ],
         )
