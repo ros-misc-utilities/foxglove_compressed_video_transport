@@ -2,6 +2,16 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* bump cmake version and try to fix gtest on humble
+* remove repos file
+* added message_type to plugins xml file
+* use nodeinterface also for publishing transport
+* default gop_size to 1 and warn if not set
+* use correct img transp version 5.0.0
+* Contributors: Bernd Pfrommer
+
 3.0.2 (2025-09-01)
 ------------------
 * support new image transport node interface
