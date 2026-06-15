@@ -34,6 +34,7 @@ struct ParameterDefinition
   // ---- variables
   ParameterValue defaultValue;
   ParameterDescriptor descriptor;
+  std::string warningIfNotSet;
 };
 }  // namespace foxglove_compressed_video_transport
 

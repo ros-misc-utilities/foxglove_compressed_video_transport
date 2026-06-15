@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 
 project(foxglove_compressed_video_transport)
 
@@ -22,7 +22,7 @@ find_package(rcutils REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
-if(${image_transport_VERSION} VERSION_GREATER_EQUAL "5.1.7")
+if(${image_transport_VERSION} VERSION_GREATER_EQUAL "5.0.0")
   add_definitions(-DIMAGE_TRANSPORT_USE_PUBLISHER_T)
   add_definitions(-DIMAGE_TRANSPORT_NEEDS_PUBLISHEROPTIONS)
 endif()
@@ -120,7 +120,8 @@ if(BUILD_TESTING)
   ament_xmllint()
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(${PROJECT_NAME}_test test/test_1.cpp
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
+    APPEND_ENV AMENT_PREFIX_PATH=${CMAKE_INSTALL_PREFIX})
   target_include_directories(${PROJECT_NAME}_test PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)

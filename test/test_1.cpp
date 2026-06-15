@@ -55,7 +55,11 @@ public:
   // since it only reads the parameters when the plugin is loaded
   void initialize()
   {
+#ifdef IMAGE_TRANSPORT_USE_NODEINTERFACE
+    image_transport_ = std::make_shared<ImageTransport>(image_transport::RequiredInterfaces(*this));
+#else
     image_transport_ = std::make_shared<ImageTransport>(std::shared_ptr<Node>(this, [](auto *) {}));
+#endif
     pub_ =
       std::make_shared<image_transport::Publisher>(image_transport_->advertise("camera/image", 1));
   }
