@@ -2,8 +2,8 @@
 Changelog for package foxglove_compressed_video_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.3 (2026-06-15)
+------------------
 * bump cmake version and try to fix gtest on humble
 * remove repos file
 * added message_type to plugins xml file
