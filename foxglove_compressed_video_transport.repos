@@ -1,5 +1,0 @@
-repositories:
-  src/ffmpeg_encoder_decoder:
-    type: git
-    url: https://github.com/ros-misc-utilities/ffmpeg_encoder_decoder.git
-    version: master
