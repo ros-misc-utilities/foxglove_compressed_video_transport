@@ -14,9 +14,10 @@ There is also an unsupported decoder provided for testing purposes. Use at your 
 Continuous integration is tested under Ubuntu with the following ROS2 distros:
 
  [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hdev__foxglove_compressed_video_transport__ubuntu_jammy_amd64&subject=Humble)](https://build.ros2.org/job/Hdev__foxglove_compressed_video_transport__ubuntu_jammy_amd64/)
- [![Build Status](https://build.ros2.org/buildStatus/icon?job=Idev__foxglove_compressed_video_transport__ubuntu_jammy_amd64&subject=Iron)](https://build.ros2.org/job/Idev__foxglove_compressed_video_transport__ubuntu_jammy_amd64/)
+ [![Build Status](https://build.ros2.org/buildStatus/icon?job=Kdev__foxglove_compressed_video_transport__ubuntu_noble_amd64&subject=Kilted)](https://build.ros2.org/job/Kdev__foxglove_compressed_video_transport__ubuntu_noble_amd64/)
  [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jdev__foxglove_compressed_video_transport__ubuntu_noble_amd64&subject=Jazzy)](https://build.ros2.org/job/Jdev__foxglove_compressed_video_transport__ubuntu_noble_amd64/)
-[![Build Status](https://build.ros2.org/buildStatus/icon?job=Rdev__foxglove_compressed_video_transport__ubuntu_noble_amd64&subject=Rolling)](https://build.ros2.org/job/Rdev__foxglove_compressed_video_transport__ubuntu_noble_amd64/)
+[![Build Status](https://build.ros2.org/buildStatus/icon?job=Ldev__foxglove_compressed_video_transport__ubuntu_resolute_amd64&subject=Lyrical)](https://build.ros2.org/job/Ldev__foxglove_compressed_video_transport__ubuntu_resolute_amd64/)
+[![Build Status](https://build.ros2.org/buildStatus/icon?job=Rdev__foxglove_compressed_video_transport__ubuntu_resolute_amd64&subject=Rolling)](https://build.ros2.org/job/Rdev__foxglove_compressed_video_transport__ubuntu_resolute_amd64/)
 
 
 ## Installation
